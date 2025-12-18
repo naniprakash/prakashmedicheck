@@ -13,9 +13,16 @@ if DATABASE_URL.startswith('postgres://'):
     DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
 
 # Create engine
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
+print(f"Connecting to database at: {DATABASE_URL.split('@')[-1] if '@' in DATABASE_URL else DATABASE_URL}")
+try:
+    engine = create_engine(DATABASE_URL)
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base = declarative_base()
+    print("Database engine and session factory created.")
+except Exception as e:
+    print(f"FAILED to create database engine: {e}")
+    raise
+
 
 # Models
 class Medication(Base):
@@ -67,7 +74,14 @@ class DrugInteraction(Base):
     description = Column(Text, nullable=False)
 
 # Create tables
-Base.metadata.create_all(bind=engine)
+print("Creating database tables if they don't exist...")
+try:
+    Base.metadata.create_all(bind=engine)
+    print("Database tables created/verified successfully.")
+except Exception as e:
+    print(f"FAILED to create database tables: {e}")
+    raise
+
 
 class MedicineDatabase:
     def __init__(self):

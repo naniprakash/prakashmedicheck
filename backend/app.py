@@ -12,14 +12,29 @@ app = Flask(__name__)
 CORS(app)
 
 # Initialize components
-db = MedicineDatabase()
-pill_model = PillRecognitionModel()
-adherence_model = AdherencePredictor()
-interaction_checker = InteractionChecker()
+print("Initializing Database...")
+try:
+    db = MedicineDatabase()
+    print("Database initialized successfully.")
+except Exception as e:
+    print(f"FAILED to initialize database: {e}")
+    raise
+
+print("Initializing ML Models...")
+try:
+    pill_model = PillRecognitionModel()
+    adherence_model = AdherencePredictor()
+    interaction_checker = InteractionChecker()
+    print("ML Models initialized successfully.")
+except Exception as e:
+    print(f"FAILED to initialize ML models: {e}")
+    raise
 
 # Ensure upload directory exists
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+print(f"Upload directory ready: {UPLOAD_FOLDER}")
+
 
 # ============= Medication Endpoints =============
 
