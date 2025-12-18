@@ -1,285 +1,239 @@
-import sqlite3
+import os
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Float, ForeignKey
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship
+from datetime import datetime
 import json
-from datetime import datetime, timedelta
-from typing import List, Dict, Optional
+
+# Get database URL from environment variable (for Render deployment)
+DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///medicine_tracker.db')
+
+# Fix for Render's postgres:// URL (SQLAlchemy needs postgresql://)
+if DATABASE_URL.startswith('postgres://'):
+    DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+
+# Create engine
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+# Models
+class Medication(Base):
+    __tablename__ = 'medications'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    dosage = Column(String(100), nullable=False)
+    frequency = Column(String(100), nullable=False)
+    times = Column(Text, nullable=False)  # JSON string
+    start_date = Column(String(50), nullable=False)
+    end_date = Column(String(50))
+    notes = Column(Text)
+    image_path = Column(String(500))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    logs = relationship("MedicationLog", back_populates="medication")
+
+class MedicationLog(Base):
+    __tablename__ = 'medication_logs'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    medication_id = Column(Integer, ForeignKey('medications.id'), nullable=False)
+    scheduled_time = Column(String(50), nullable=False)
+    taken_time = Column(String(50))
+    status = Column(String(50), nullable=False)
+    notes = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    medication = relationship("Medication", back_populates="logs")
+
+class MLPrediction(Base):
+    __tablename__ = 'ml_predictions'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    medication_id = Column(Integer, ForeignKey('medications.id'), nullable=False)
+    prediction_type = Column(String(100), nullable=False)
+    prediction_value = Column(Float, nullable=False)
+    confidence = Column(Float, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class DrugInteraction(Base):
+    __tablename__ = 'drug_interactions'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    drug1 = Column(String(200), nullable=False)
+    drug2 = Column(String(200), nullable=False)
+    severity = Column(String(50), nullable=False)
+    description = Column(Text, nullable=False)
+
+# Create tables
+Base.metadata.create_all(bind=engine)
 
 class MedicineDatabase:
-    def __init__(self, db_path='medicine_tracker.db'):
-        self.db_path = db_path
-        self.init_database()
-    
-    def get_connection(self):
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        return conn
-    
-    def init_database(self):
-        """Initialize database with required tables"""
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        
-        # Medications table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS medications (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                dosage TEXT NOT NULL,
-                frequency TEXT NOT NULL,
-                times TEXT NOT NULL,
-                start_date TEXT NOT NULL,
-                end_date TEXT,
-                notes TEXT,
-                image_path TEXT,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        # Medication logs table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS medication_logs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                medication_id INTEGER NOT NULL,
-                scheduled_time TEXT NOT NULL,
-                taken_time TEXT,
-                status TEXT NOT NULL,
-                notes TEXT,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (medication_id) REFERENCES medications (id)
-            )
-        ''')
-        
-        # ML predictions table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS ml_predictions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                medication_id INTEGER NOT NULL,
-                prediction_type TEXT NOT NULL,
-                prediction_value REAL NOT NULL,
-                confidence REAL NOT NULL,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (medication_id) REFERENCES medications (id)
-            )
-        ''')
-        
-        # Drug interactions table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS drug_interactions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                drug1 TEXT NOT NULL,
-                drug2 TEXT NOT NULL,
-                severity TEXT NOT NULL,
-                description TEXT NOT NULL
-            )
-        ''')
-        
-        conn.commit()
-        conn.close()
+    def __init__(self):
+        self.session = SessionLocal()
     
     def add_medication(self, name: str, dosage: str, frequency: str, 
-                      times: List[str], start_date: str, end_date: Optional[str] = None,
-                      notes: Optional[str] = None, image_path: Optional[str] = None) -> int:
+                      times: list, start_date: str, end_date: str = None,
+                      notes: str = None, image_path: str = None) -> int:
         """Add a new medication"""
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            INSERT INTO medications (name, dosage, frequency, times, start_date, end_date, notes, image_path)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (name, dosage, frequency, json.dumps(times), start_date, end_date, notes, image_path))
-        
-        med_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
-        
-        return med_id
+        med = Medication(
+            name=name,
+            dosage=dosage,
+            frequency=frequency,
+            times=json.dumps(times),
+            start_date=start_date,
+            end_date=end_date,
+            notes=notes,
+            image_path=image_path
+        )
+        self.session.add(med)
+        self.session.commit()
+        return med.id
     
-    def get_all_medications(self) -> List[Dict]:
+    def get_all_medications(self) -> list:
         """Get all medications"""
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute('SELECT * FROM medications ORDER BY created_at DESC')
-        rows = cursor.fetchall()
-        
-        medications = []
-        for row in rows:
-            med = dict(row)
-            med['times'] = json.loads(med['times'])
-            medications.append(med)
-        
-        conn.close()
-        return medications
+        meds = self.session.query(Medication).order_by(Medication.created_at.desc()).all()
+        return [self._medication_to_dict(med) for med in meds]
     
-    def get_medication(self, med_id: int) -> Optional[Dict]:
+    def get_medication(self, med_id: int) -> dict:
         """Get a specific medication"""
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute('SELECT * FROM medications WHERE id = ?', (med_id,))
-        row = cursor.fetchone()
-        
-        if row:
-            med = dict(row)
-            med['times'] = json.loads(med['times'])
-            conn.close()
-            return med
-        
-        conn.close()
-        return None
+        med = self.session.query(Medication).filter(Medication.id == med_id).first()
+        return self._medication_to_dict(med) if med else None
     
     def update_medication(self, med_id: int, **kwargs) -> bool:
         """Update medication details"""
-        conn = self.get_connection()
-        cursor = conn.cursor()
+        med = self.session.query(Medication).filter(Medication.id == med_id).first()
+        if not med:
+            return False
         
-        # Build update query dynamically
-        fields = []
-        values = []
         for key, value in kwargs.items():
             if key == 'times' and isinstance(value, list):
                 value = json.dumps(value)
-            fields.append(f"{key} = ?")
-            values.append(value)
+            setattr(med, key, value)
         
-        values.append(med_id)
-        query = f"UPDATE medications SET {', '.join(fields)} WHERE id = ?"
-        
-        cursor.execute(query, values)
-        conn.commit()
-        success = cursor.rowcount > 0
-        conn.close()
-        
-        return success
+        self.session.commit()
+        return True
     
     def delete_medication(self, med_id: int) -> bool:
         """Delete a medication"""
-        conn = self.get_connection()
-        cursor = conn.cursor()
+        med = self.session.query(Medication).filter(Medication.id == med_id).first()
+        if not med:
+            return False
         
-        cursor.execute('DELETE FROM medications WHERE id = ?', (med_id,))
-        conn.commit()
-        success = cursor.rowcount > 0
-        conn.close()
-        
-        return success
+        self.session.delete(med)
+        self.session.commit()
+        return True
     
     def log_medication(self, medication_id: int, scheduled_time: str, 
-                      taken_time: Optional[str] = None, status: str = 'pending',
-                      notes: Optional[str] = None) -> int:
+                      taken_time: str = None, status: str = 'pending',
+                      notes: str = None) -> int:
         """Log medication intake"""
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            INSERT INTO medication_logs (medication_id, scheduled_time, taken_time, status, notes)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (medication_id, scheduled_time, taken_time, status, notes))
-        
-        log_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
-        
-        return log_id
+        log = MedicationLog(
+            medication_id=medication_id,
+            scheduled_time=scheduled_time,
+            taken_time=taken_time,
+            status=status,
+            notes=notes
+        )
+        self.session.add(log)
+        self.session.commit()
+        return log.id
     
-    def get_medication_logs(self, medication_id: Optional[int] = None, 
-                           start_date: Optional[str] = None,
-                           end_date: Optional[str] = None) -> List[Dict]:
+    def get_medication_logs(self, medication_id: int = None, 
+                           start_date: str = None,
+                           end_date: str = None) -> list:
         """Get medication logs with optional filters"""
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        
-        query = 'SELECT * FROM medication_logs WHERE 1=1'
-        params = []
+        query = self.session.query(MedicationLog)
         
         if medication_id:
-            query += ' AND medication_id = ?'
-            params.append(medication_id)
-        
+            query = query.filter(MedicationLog.medication_id == medication_id)
         if start_date:
-            query += ' AND scheduled_time >= ?'
-            params.append(start_date)
-        
+            query = query.filter(MedicationLog.scheduled_time >= start_date)
         if end_date:
-            query += ' AND scheduled_time <= ?'
-            params.append(end_date)
+            query = query.filter(MedicationLog.scheduled_time <= end_date)
         
-        query += ' ORDER BY scheduled_time DESC'
-        
-        cursor.execute(query, params)
-        rows = cursor.fetchall()
-        
-        logs = [dict(row) for row in rows]
-        conn.close()
-        
-        return logs
+        logs = query.order_by(MedicationLog.scheduled_time.desc()).all()
+        return [self._log_to_dict(log) for log in logs]
     
-    def update_log_status(self, log_id: int, status: str, taken_time: Optional[str] = None) -> bool:
+    def update_log_status(self, log_id: int, status: str, taken_time: str = None) -> bool:
         """Update medication log status"""
-        conn = self.get_connection()
-        cursor = conn.cursor()
+        log = self.session.query(MedicationLog).filter(MedicationLog.id == log_id).first()
+        if not log:
+            return False
         
+        log.status = status
         if taken_time:
-            cursor.execute('''
-                UPDATE medication_logs SET status = ?, taken_time = ? WHERE id = ?
-            ''', (status, taken_time, log_id))
-        else:
-            cursor.execute('''
-                UPDATE medication_logs SET status = ? WHERE id = ?
-            ''', (status, log_id))
+            log.taken_time = taken_time
         
-        conn.commit()
-        success = cursor.rowcount > 0
-        conn.close()
-        
-        return success
+        self.session.commit()
+        return True
     
     def save_ml_prediction(self, medication_id: int, prediction_type: str,
                           prediction_value: float, confidence: float) -> int:
         """Save ML model prediction"""
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            INSERT INTO ml_predictions (medication_id, prediction_type, prediction_value, confidence)
-            VALUES (?, ?, ?, ?)
-        ''', (medication_id, prediction_type, prediction_value, confidence))
-        
-        pred_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
-        
-        return pred_id
+        pred = MLPrediction(
+            medication_id=medication_id,
+            prediction_type=prediction_type,
+            prediction_value=prediction_value,
+            confidence=confidence
+        )
+        self.session.add(pred)
+        self.session.commit()
+        return pred.id
     
-    def get_adherence_stats(self, medication_id: Optional[int] = None, days: int = 30) -> Dict:
+    def get_adherence_stats(self, medication_id: int = None, days: int = 30) -> dict:
         """Calculate adherence statistics"""
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        
+        from datetime import timedelta
         start_date = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
         
-        query = '''
-            SELECT 
-                COUNT(*) as total,
-                SUM(CASE WHEN status = 'taken' THEN 1 ELSE 0 END) as taken,
-                SUM(CASE WHEN status = 'missed' THEN 1 ELSE 0 END) as missed,
-                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending
-            FROM medication_logs
-            WHERE scheduled_time >= ?
-        '''
+        query = self.session.query(MedicationLog).filter(
+            MedicationLog.scheduled_time >= start_date
+        )
         
-        params = [start_date]
         if medication_id:
-            query += ' AND medication_id = ?'
-            params.append(medication_id)
+            query = query.filter(MedicationLog.medication_id == medication_id)
         
-        cursor.execute(query, params)
-        row = cursor.fetchone()
+        logs = query.all()
         
-        stats = dict(row)
-        if stats['total'] > 0:
-            stats['adherence_rate'] = (stats['taken'] / stats['total']) * 100
-        else:
-            stats['adherence_rate'] = 0
+        total = len(logs)
+        taken = sum(1 for log in logs if log.status == 'taken')
+        missed = sum(1 for log in logs if log.status == 'missed')
+        pending = sum(1 for log in logs if log.status == 'pending')
         
-        conn.close()
-        return stats
+        adherence_rate = (taken / total * 100) if total > 0 else 0
+        
+        return {
+            'total': total,
+            'taken': taken,
+            'missed': missed,
+            'pending': pending,
+            'adherence_rate': adherence_rate
+        }
+    
+    def _medication_to_dict(self, med) -> dict:
+        """Convert medication object to dictionary"""
+        return {
+            'id': med.id,
+            'name': med.name,
+            'dosage': med.dosage,
+            'frequency': med.frequency,
+            'times': med.times,  # Already JSON string
+            'start_date': med.start_date,
+            'end_date': med.end_date,
+            'notes': med.notes,
+            'image_path': med.image_path,
+            'created_at': med.created_at.isoformat() if med.created_at else None
+        }
+    
+    def _log_to_dict(self, log) -> dict:
+        """Convert log object to dictionary"""
+        return {
+            'id': log.id,
+            'medication_id': log.medication_id,
+            'scheduled_time': log.scheduled_time,
+            'taken_time': log.taken_time,
+            'status': log.status,
+            'notes': log.notes,
+            'created_at': log.created_at.isoformat() if log.created_at else None
+        }
