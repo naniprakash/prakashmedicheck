@@ -9,7 +9,7 @@ import os
 import base64
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=["https://medicine-tracker-ui.onrender.com", "http://localhost:5173"])
 
 # Initialize components
 print("Initializing Database...")

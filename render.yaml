@@ -28,8 +28,7 @@ services:
         fromService:
           name: medicine-tracker-api
           type: web
-          property: host
-        suffix: /api
+          property: url
 
 databases:
   - name: medicine-tracker-db
