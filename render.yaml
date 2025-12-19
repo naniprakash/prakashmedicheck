@@ -16,8 +16,9 @@ services:
         value: 5000
 
   # Frontend Service
-  - type: static
+  - type: web
     name: medicine-tracker-ui
+    runtime: static
     buildCommand: npm run build
     staticPublishPath: dist
     envVars:
