@@ -4,7 +4,7 @@ services:
     name: medicine-tracker-api
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    startCommand: gunicorn -b 0.0.0.0:$PORT app:app
     rootDir: backend
     plan: free
     envVars:
