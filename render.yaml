@@ -16,12 +16,10 @@ services:
         value: 5000
 
   # Frontend Service
-  - type: web
+  - type: static_site
     name: medicine-tracker-ui
-    env: static
     buildCommand: npm run build
     publishDir: dist
-    plan: free
     envVars:
       - key: VITE_API_URL
         fromStack:
