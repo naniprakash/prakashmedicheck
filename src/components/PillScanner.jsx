@@ -51,39 +51,39 @@ export default function PillScanner({ onPillRecognized }) {
     };
 
     return (
-        <div className="pill-scanner">
-            <div className="glass-card">
-                <h2>📸 Pill Recognition</h2>
-                <p className="text-secondary mb-lg">
-                    Upload a photo of your pill to identify it using AI
-                </p>
+        <div className="pill-scanner animate-fade-in">
+            <div className="card">
+                <div className="mb-lg">
+                    <h1 style={{ marginBottom: '0.25rem' }}>Visual Identification System</h1>
+                    <p className="text-secondary">Leverage AI to identify pharmaceutical products from photographic imagery.</p>
+                </div>
 
                 {!imagePreview ? (
                     <div
                         className="upload-zone"
                         style={{
-                            border: '2px dashed var(--border-color)',
-                            borderRadius: 'var(--radius-xl)',
-                            padding: '3rem',
+                            border: '2px dashed var(--border-subtle)',
+                            borderRadius: 'var(--radius-lg)',
+                            padding: '4rem 2rem',
                             textAlign: 'center',
                             cursor: 'pointer',
                             transition: 'all var(--transition-base)',
-                            background: 'var(--bg-glass)'
+                            backgroundColor: 'var(--bg-secondary)'
                         }}
                         onClick={() => fileInputRef.current?.click()}
                         onDragOver={(e) => {
                             e.preventDefault();
-                            e.currentTarget.style.borderColor = 'var(--primary-blue)';
-                            e.currentTarget.style.background = 'rgba(37, 99, 235, 0.1)';
+                            e.currentTarget.style.borderColor = 'var(--primary)';
+                            e.currentTarget.style.backgroundColor = 'rgba(15, 23, 42, 0.05)';
                         }}
                         onDragLeave={(e) => {
-                            e.currentTarget.style.borderColor = 'var(--border-color)';
-                            e.currentTarget.style.background = 'var(--bg-glass)';
+                            e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                            e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
                         }}
                         onDrop={(e) => {
                             e.preventDefault();
-                            e.currentTarget.style.borderColor = 'var(--border-color)';
-                            e.currentTarget.style.background = 'var(--bg-glass)';
+                            e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                            e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
 
                             const file = e.dataTransfer.files[0];
                             if (file && file.type.startsWith('image/')) {
@@ -96,13 +96,13 @@ export default function PillScanner({ onPillRecognized }) {
                             }
                         }}
                     >
-                        <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📷</div>
-                        <h3>Upload Pill Image</h3>
-                        <p className="text-secondary mb-lg">
-                            Click to browse or drag and drop an image
+                        <div style={{ fontSize: '3rem', marginBottom: '1.5rem' }}>📸</div>
+                        <h3 style={{ marginBottom: '0.5rem' }}>Upload Product Image</h3>
+                        <p className="text-secondary mb-xl" style={{ fontSize: '0.875rem' }}>
+                            Supported formats: PNG, JPG, WEBP. Maximum file size: 10MB.
                         </p>
                         <button className="btn btn-primary" type="button">
-                            Choose Image
+                            Select Source Image
                         </button>
                         <input
                             ref={fileInputRef}
@@ -117,19 +117,20 @@ export default function PillScanner({ onPillRecognized }) {
                         {/* Image Preview */}
                         <div style={{
                             marginBottom: '1.5rem',
-                            borderRadius: 'var(--radius-xl)',
+                            borderRadius: 'var(--radius-lg)',
                             overflow: 'hidden',
-                            maxHeight: '400px',
+                            maxHeight: '350px',
                             display: 'flex',
                             justifyContent: 'center',
-                            background: 'var(--bg-glass)'
+                            backgroundColor: 'white',
+                            border: '1px solid var(--border-subtle)'
                         }}>
                             <img
                                 src={imagePreview}
-                                alt="Pill preview"
+                                alt="Source documentation"
                                 style={{
                                     maxWidth: '100%',
-                                    maxHeight: '400px',
+                                    maxHeight: '350px',
                                     objectFit: 'contain'
                                 }}
                             />
@@ -137,96 +138,77 @@ export default function PillScanner({ onPillRecognized }) {
 
                         {/* Scanning State */}
                         {scanning && (
-                            <div className="text-center" style={{ padding: '2rem' }}>
-                                <div className="spinner" style={{ margin: '0 auto 1rem' }}></div>
-                                <p className="text-secondary">Analyzing image with AI...</p>
+                            <div className="text-center" style={{ padding: '3rem 0' }}>
+                                <div className="spinner" style={{ margin: '0 auto 1.5rem' }}></div>
+                                <p className="text-secondary" style={{ fontWeight: '500' }}>Executing AI Recognition Sequence...</p>
                             </div>
                         )}
 
                         {/* Results */}
                         {result && !scanning && (
-                            <div>
+                            <div className="mt-xl">
                                 {result.success ? (
-                                    <div className="glass-card" style={{ background: 'rgba(16, 185, 129, 0.1)', borderColor: 'var(--success-green)' }}>
-                                        <h3>✅ Pill Identified</h3>
-
-                                        <div style={{ marginTop: '1rem' }}>
-                                            <div style={{ fontSize: '2rem', fontWeight: '700', marginBottom: '0.5rem' }}>
-                                                {result.pill_name}
+                                    <div className="card" style={{ backgroundColor: 'var(--bg-secondary)', borderLeft: '4px solid var(--success)', padding: '1.5rem' }}>
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <div className="text-muted" style={{ fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Recognition Result</div>
+                                                <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--primary)', marginBottom: '0.75rem' }}>
+                                                    {result.pill_name}
+                                                </div>
                                             </div>
+                                            <div className="badge badge-success" style={{ padding: '0.4rem 0.8rem' }}>
+                                                {(result.confidence * 100).toFixed(1)}% Confidence
+                                            </div>
+                                        </div>
 
-                                            <div className="flex items-center gap-md mb-lg">
-                                                <span className="badge badge-success">
-                                                    {(result.confidence * 100).toFixed(1)}% Confidence
+                                        <div className="flex gap-md mb-lg">
+                                            {result.features && (
+                                                <span className="text-secondary" style={{ fontSize: '0.875rem' }}>
+                                                    <span style={{ fontWeight: '600' }}>Dominant Color:</span> {result.features.dominant_color}
                                                 </span>
-                                                {result.features && (
-                                                    <span className="badge badge-info">
-                                                        Color: {result.features.dominant_color}
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            {result.warning && (
-                                                <div style={{
-                                                    padding: '1rem',
-                                                    background: 'rgba(245, 158, 11, 0.1)',
-                                                    border: '1px solid var(--warning-yellow)',
-                                                    borderRadius: 'var(--radius-md)',
-                                                    marginBottom: '1rem'
-                                                }}>
-                                                    ⚠️ {result.warning}
-                                                </div>
-                                            )}
-
-                                            {result.top_predictions && result.top_predictions.length > 1 && (
-                                                <div>
-                                                    <div className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-                                                        Other Possibilities:
-                                                    </div>
-                                                    <div className="grid gap-sm">
-                                                        {result.top_predictions.slice(1).map((pred, idx) => (
-                                                            <div key={idx} style={{
-                                                                padding: '0.75rem',
-                                                                background: 'var(--bg-glass)',
-                                                                borderRadius: 'var(--radius-md)',
-                                                                display: 'flex',
-                                                                justifyContent: 'space-between',
-                                                                alignItems: 'center'
-                                                            }}>
-                                                                <span>{pred.name}</span>
-                                                                <span className="text-muted">
-                                                                    {(pred.confidence * 100).toFixed(1)}%
-                                                                </span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
                                             )}
                                         </div>
+
+                                        {result.warning && (
+                                            <div className="p-md mb-lg" style={{ backgroundColor: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 'var(--radius-md)', color: '#9a3412', fontSize: '0.875rem' }}>
+                                                <strong>⚠️ Clinical Precaution:</strong> {result.warning}
+                                            </div>
+                                        )}
+
+                                        {result.top_predictions && result.top_predictions.length > 1 && (
+                                            <div className="mt-md pt-md" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                                                <div className="text-muted mb-sm" style={{ fontSize: '0.75rem', fontWeight: '600' }}>Alternative Probabilities</div>
+                                                <div className="flex flex-col gap-xs">
+                                                    {result.top_predictions.slice(1, 3).map((pred, idx) => (
+                                                        <div key={idx} className="flex justify-between items-center text-secondary" style={{ fontSize: '0.875rem' }}>
+                                                            <span>{pred.name}</span>
+                                                            <span style={{ fontWeight: '600' }}>{(pred.confidence * 100).toFixed(1)}%</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
-                                    <div className="glass-card" style={{ background: 'rgba(239, 68, 68, 0.1)', borderColor: 'var(--error-red)' }}>
-                                        <h3>❌ Recognition Failed</h3>
-                                        <p className="text-secondary">{result.error || result.message}</p>
+                                    <div className="card" style={{ borderLeft: '4px solid var(--danger)', backgroundColor: '#fef2f2' }}>
+                                        <h4 style={{ color: 'var(--danger)', margin: 0 }}>Recognition Variance</h4>
+                                        <p className="text-secondary mt-sm" style={{ margin: 0 }}>{result.error || result.message}</p>
                                     </div>
                                 )}
                             </div>
                         )}
 
                         {/* Action Buttons */}
-                        <div className="flex gap-md mt-lg">
+                        <div className="flex gap-md mt-xl justify-center">
                             <button className="btn btn-outline" onClick={resetScanner}>
-                                📷 Scan Another
+                                Reset Identification
                             </button>
                             {result?.success && (
                                 <button
                                     className="btn btn-primary"
-                                    onClick={() => {
-                                        // Pre-fill medication form with recognized pill
-                                        alert(`Add ${result.pill_name} to your medications`);
-                                    }}
+                                    onClick={() => alert(`Redirecting to enrollment for ${result.pill_name}`)}
                                 >
-                                    ➕ Add to Medications
+                                    Confirm & Register
                                 </button>
                             )}
                         </div>
@@ -234,18 +216,13 @@ export default function PillScanner({ onPillRecognized }) {
                 )}
 
                 {/* Info Section */}
-                <div className="mt-lg" style={{
-                    padding: '1rem',
-                    background: 'var(--bg-glass)',
-                    borderRadius: 'var(--radius-md)',
-                    borderLeft: '4px solid var(--info-blue)'
-                }}>
-                    <div style={{ fontWeight: '600', marginBottom: '0.5rem' }}>💡 Tips for Best Results:</div>
-                    <ul style={{ marginLeft: '1.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                        <li>Use good lighting</li>
-                        <li>Place pill on a plain background</li>
-                        <li>Ensure pill is in focus</li>
-                        <li>Include any imprints or markings</li>
+                <div className="mt-xl p-lg" style={{ backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+                    <h5 style={{ margin: '0 0 0.75rem 0', color: 'var(--primary)' }}>Documentation Protocol:</h5>
+                    <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.875rem', color: 'var(--text-secondary)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                        <li>Ensure high-intensity ambient lighting.</li>
+                        <li>Utilize a neutral, non-reflective backdrop.</li>
+                        <li>Verify focus on pharmaceutical imprints.</li>
+                        <li>Position the product centrally in frame.</li>
                     </ul>
                 </div>
             </div>

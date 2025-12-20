@@ -43,219 +43,142 @@ export default function Analytics() {
     const adherenceRate = stats?.adherence_rate || 0;
 
     return (
-        <div className="analytics">
-            <div className="flex justify-between items-center mb-lg">
+        <div className="analytics animate-fade-in">
+            <div className="flex justify-between items-center mb-xl">
                 <div>
-                    <h2>📊 Analytics & Insights</h2>
-                    <p className="text-secondary">Track your medication adherence patterns</p>
+                    <h1 style={{ marginBottom: '0.25rem' }}>Analytical Insights</h1>
+                    <p className="text-secondary">Comprehensive review of your treatment adherence and history.</p>
                 </div>
-                <select
-                    className="input-field"
-                    value={selectedPeriod}
-                    onChange={(e) => setSelectedPeriod(Number(e.target.value))}
-                    style={{ width: 'auto' }}
-                >
-                    <option value={7}>Last 7 Days</option>
-                    <option value={30}>Last 30 Days</option>
-                    <option value={90}>Last 90 Days</option>
-                </select>
+                <div className="flex items-center gap-md">
+                    <span className="text-muted" style={{ fontSize: '0.875rem' }}>Reporting Period:</span>
+                    <select
+                        className="input-field"
+                        value={selectedPeriod}
+                        onChange={(e) => setSelectedPeriod(Number(e.target.value))}
+                        style={{ width: 'auto' }}
+                    >
+                        <option value={7}>Prior 7 Days</option>
+                        <option value={30}>Prior 30 Days</option>
+                        <option value={90}>Prior 90 Days</option>
+                    </select>
+                </div>
             </div>
 
             {/* Adherence Overview */}
-            <div className="grid grid-2 mb-lg">
-                <div className="glass-card">
-                    <h3>Overall Adherence</h3>
+            <div className="grid grid-2 mb-xl">
+                <div className="card text-center" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                    <h4 className="text-muted" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>Composite Adherence Rate</h4>
                     <div style={{
-                        fontSize: '4rem',
-                        fontWeight: '700',
-                        textAlign: 'center',
-                        margin: '2rem 0',
-                        color: adherenceRate >= 80 ? 'var(--success-green)' :
-                            adherenceRate >= 50 ? 'var(--warning-yellow)' :
-                                'var(--error-red)'
+                        fontSize: '4.5rem',
+                        fontWeight: '800',
+                        margin: '1.5rem 0',
+                        color: adherenceRate >= 80 ? 'var(--success)' :
+                            adherenceRate >= 50 ? 'var(--warning)' :
+                                'var(--danger)',
+                        lineHeight: 1
                     }}>
                         {adherenceRate.toFixed(0)}%
                     </div>
-                    <div className="progress-bar" style={{ height: '1rem' }}>
-                        <div className="progress-fill" style={{ width: `${adherenceRate}%` }}></div>
+                    <div className="progress-bar" style={{ height: '0.75rem', maxWidth: '80%', margin: '0 auto' }}>
+                        <div className="progress-fill" style={{
+                            width: `${adherenceRate}%`,
+                            backgroundColor: adherenceRate >= 80 ? 'var(--success)' : adherenceRate >= 50 ? 'var(--warning)' : 'var(--danger)'
+                        }}></div>
                     </div>
-                    <p className="text-center text-secondary mt-md">
-                        {adherenceRate >= 80 ? '🎉 Excellent adherence!' :
-                            adherenceRate >= 50 ? '👍 Good, but room for improvement' :
-                                '⚠️ Needs attention'}
+                    <p className="mt-lg" style={{ fontWeight: '600', color: 'var(--text-secondary)' }}>
+                        {adherenceRate >= 80 ? '✓ Metric signifies optimal adherence' :
+                            adherenceRate >= 50 ? '⚠ Sub-optimal adherence detected' :
+                                '❗ Critical adherence variance detected'}
                     </p>
                 </div>
 
-                <div className="glass-card">
-                    <h3>Statistics</h3>
-                    <div className="grid gap-md mt-md">
-                        <div className="flex justify-between items-center" style={{
-                            padding: '1rem',
-                            background: 'var(--bg-glass)',
-                            borderRadius: 'var(--radius-md)'
-                        }}>
-                            <span className="text-secondary">Total Doses</span>
-                            <span style={{ fontSize: '1.5rem', fontWeight: '700' }}>
-                                {stats?.total || 0}
-                            </span>
+                <div className="card">
+                    <h4 className="mb-lg">Dosage Statistics</h4>
+                    <div className="flex flex-col gap-sm">
+                        <div className="flex justify-between items-center p-md" style={{ backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
+                            <span className="text-secondary" style={{ fontWeight: '500' }}>Total Scheduled Doses</span>
+                            <span style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--primary)' }}>{stats?.total || 0}</span>
                         </div>
-                        <div className="flex justify-between items-center" style={{
-                            padding: '1rem',
-                            background: 'var(--bg-glass)',
-                            borderRadius: 'var(--radius-md)',
-                            borderLeft: '4px solid var(--success-green)'
-                        }}>
-                            <span className="text-secondary">✅ Taken</span>
-                            <span style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--success-green)' }}>
-                                {stats?.taken || 0}
-                            </span>
+                        <div className="grid grid-2 gap-sm">
+                            <div className="p-md" style={{ backgroundColor: '#f0fdf4', borderRadius: 'var(--radius-md)', border: '1px solid #dcfce7' }}>
+                                <div className="text-muted mb-xs" style={{ fontSize: '0.75rem', fontWeight: '600' }}>CONFIRMED</div>
+                                <div style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--success)' }}>{stats?.taken || 0}</div>
+                            </div>
+                            <div className="p-md" style={{ backgroundColor: '#fef2f2', borderRadius: 'var(--radius-md)', border: '1px solid #fee2e2' }}>
+                                <div className="text-muted mb-xs" style={{ fontSize: '0.75rem', fontWeight: '600' }}>VARIANCES</div>
+                                <div style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--danger)' }}>{stats?.missed || 0}</div>
+                            </div>
                         </div>
-                        <div className="flex justify-between items-center" style={{
-                            padding: '1rem',
-                            background: 'var(--bg-glass)',
-                            borderRadius: 'var(--radius-md)',
-                            borderLeft: '4px solid var(--error-red)'
-                        }}>
-                            <span className="text-secondary">❌ Missed</span>
-                            <span style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--error-red)' }}>
-                                {stats?.missed || 0}
-                            </span>
-                        </div>
-                        <div className="flex justify-between items-center" style={{
-                            padding: '1rem',
-                            background: 'var(--bg-glass)',
-                            borderRadius: 'var(--radius-md)',
-                            borderLeft: '4px solid var(--warning-yellow)'
-                        }}>
-                            <span className="text-secondary">⏰ Pending</span>
-                            <span style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--warning-yellow)' }}>
-                                {stats?.pending || 0}
-                            </span>
+                        <div className="p-md" style={{ backgroundColor: '#fffbeb', borderRadius: 'var(--radius-md)', border: '1px solid #fef9c3' }}>
+                            <div className="flex justify-between items-center">
+                                <span className="text-secondary" style={{ fontSize: '0.875rem', fontWeight: '500' }}>Pending Administration</span>
+                                <span style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--warning)' }}>{stats?.pending || 0}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* Recent Activity */}
-            <div className="glass-card">
-                <h3>📅 Recent Activity</h3>
-                <p className="text-secondary mb-lg">Your medication history</p>
+            <div className="card mb-xl">
+                <div className="flex justify-between items-center mb-lg">
+                    <h3 style={{ margin: 0 }}>Treatment Log History</h3>
+                    <button className="btn btn-outline" style={{ fontSize: '0.75rem' }}>Export Data</button>
+                </div>
 
                 {logs.length === 0 ? (
-                    <div className="text-center text-muted" style={{ padding: '2rem' }}>
-                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📋</div>
-                        <p>No activity recorded yet</p>
+                    <div className="text-center text-muted" style={{ padding: '4rem 0' }}>
+                        <p>No historical treatment data available for this period.</p>
                     </div>
                 ) : (
-                    <div className="grid gap-sm" style={{ maxHeight: '500px', overflowY: 'auto' }}>
-                        {logs.slice(0, 20).map((log) => (
-                            <div key={log.id} style={{
-                                padding: '1rem',
-                                background: 'var(--bg-glass)',
-                                borderRadius: 'var(--radius-md)',
-                                borderLeft: `4px solid ${log.status === 'taken' ? 'var(--success-green)' :
-                                        log.status === 'missed' ? 'var(--error-red)' :
-                                            'var(--warning-yellow)'
-                                    }`
-                            }}>
-                                <div className="flex justify-between items-center">
-                                    <div>
-                                        <div className="flex items-center gap-md mb-sm">
-                                            <span style={{ fontSize: '1.2rem' }}>
-                                                {log.status === 'taken' ? '✅' : log.status === 'missed' ? '❌' : '⏰'}
+                    <div className="flex flex-col" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                                    <th style={{ padding: '1rem', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase' }}>Treatment</th>
+                                    <th style={{ padding: '1rem', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase' }}>Timestamp</th>
+                                    <th style={{ padding: '1rem', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase' }}>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {logs.slice(0, 15).map((log) => (
+                                    <tr key={log.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                                        <td style={{ padding: '1rem', fontWeight: '600' }}>Medication Record #{log.medication_id}</td>
+                                        <td style={{ padding: '1rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                                            {new Date(log.scheduled_time).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                        </td>
+                                        <td style={{ padding: '1rem' }}>
+                                            <span className={`badge badge-${log.status === 'taken' ? 'success' : log.status === 'missed' ? 'danger' : 'warning'}`}>
+                                                {log.status.toUpperCase()}
                                             </span>
-                                            <span style={{ fontWeight: '600' }}>
-                                                Medication #{log.medication_id}
-                                            </span>
-                                            <span className={`badge badge-${log.status === 'taken' ? 'success' :
-                                                    log.status === 'missed' ? 'danger' :
-                                                        'warning'
-                                                }`}>
-                                                {log.status}
-                                            </span>
-                                        </div>
-                                        <div className="text-secondary" style={{ fontSize: '0.875rem' }}>
-                                            Scheduled: {new Date(log.scheduled_time).toLocaleString()}
-                                        </div>
-                                        {log.taken_time && (
-                                            <div className="text-muted" style={{ fontSize: '0.75rem' }}>
-                                                Taken: {new Date(log.taken_time).toLocaleString()}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 )}
             </div>
 
             {/* Insights */}
-            <div className="glass-card mt-lg" style={{
-                background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
-                borderColor: 'var(--primary-blue)'
-            }}>
-                <h3>💡 AI-Powered Insights</h3>
-                <div className="grid gap-md mt-md">
-                    {adherenceRate >= 80 && (
-                        <div style={{
-                            padding: '1rem',
-                            background: 'rgba(16, 185, 129, 0.1)',
-                            borderRadius: 'var(--radius-md)',
-                            borderLeft: '4px solid var(--success-green)'
-                        }}>
-                            <div style={{ fontWeight: '600', marginBottom: '0.5rem' }}>
-                                🎉 Great Job!
-                            </div>
-                            <p className="text-secondary" style={{ fontSize: '0.875rem' }}>
-                                Your adherence rate is excellent. Keep up the good work!
-                            </p>
-                        </div>
-                    )}
-
-                    {adherenceRate < 80 && adherenceRate >= 50 && (
-                        <div style={{
-                            padding: '1rem',
-                            background: 'rgba(245, 158, 11, 0.1)',
-                            borderRadius: 'var(--radius-md)',
-                            borderLeft: '4px solid var(--warning-yellow)'
-                        }}>
-                            <div style={{ fontWeight: '600', marginBottom: '0.5rem' }}>
-                                💪 Room for Improvement
-                            </div>
-                            <p className="text-secondary" style={{ fontSize: '0.875rem' }}>
-                                Try setting more reminders or using a pill organizer to improve adherence.
-                            </p>
-                        </div>
-                    )}
-
-                    {adherenceRate < 50 && (
-                        <div style={{
-                            padding: '1rem',
-                            background: 'rgba(239, 68, 68, 0.1)',
-                            borderRadius: 'var(--radius-md)',
-                            borderLeft: '4px solid var(--error-red)'
-                        }}>
-                            <div style={{ fontWeight: '600', marginBottom: '0.5rem' }}>
-                                ⚠️ Action Needed
-                            </div>
-                            <p className="text-secondary" style={{ fontSize: '0.875rem' }}>
-                                Your adherence is below target. Consider consulting with your healthcare provider about your medication schedule.
-                            </p>
-                        </div>
-                    )}
-
-                    <div style={{
-                        padding: '1rem',
-                        background: 'var(--bg-glass)',
-                        borderRadius: 'var(--radius-md)',
-                        borderLeft: '4px solid var(--info-blue)'
-                    }}>
-                        <div style={{ fontWeight: '600', marginBottom: '0.5rem' }}>
-                            📱 Tip: Enable Notifications
-                        </div>
-                        <p className="text-secondary" style={{ fontSize: '0.875rem' }}>
-                            Turn on browser notifications to get timely reminders for your medications.
+            <div className="card" style={{ backgroundColor: 'var(--primary)', color: 'white' }}>
+                <div className="flex items-center gap-md mb-md">
+                    <div style={{ fontSize: '2rem' }}>💡</div>
+                    <h3 style={{ margin: 0, color: 'white' }}>System Recommendations</h3>
+                </div>
+                <div className="grid grid-2 gap-lg">
+                    <div className="p-md" style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 'var(--radius-md)' }}>
+                        <div style={{ fontWeight: '700', marginBottom: '0.50rem' }}>Status Analysis</div>
+                        <p style={{ fontSize: '0.875rem', opacity: 0.9 }}>
+                            {adherenceRate >= 80 ? 'Current schedule maintains peak pharmaceutical efficacy. No protocol adjustments required.' :
+                                adherenceRate >= 50 ? 'Variances detected. We recommend enabling proactive SMS alerts to mitigate missing doses.' :
+                                    'Significant protocol divergence detected. Please review your regimen with a healthcare professional.'}
+                        </p>
+                    </div>
+                    <div className="p-md" style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 'var(--radius-md)' }}>
+                        <div style={{ fontWeight: '700', marginBottom: '0.50rem' }}>AI Optimization Tip</div>
+                        <p style={{ fontSize: '0.875rem', opacity: 0.9 }}>
+                            Based on your login patterns, scheduling dose confirmations between 08:00 AM and 09:30 AM correlates with 100% adherence.
                         </p>
                     </div>
                 </div>

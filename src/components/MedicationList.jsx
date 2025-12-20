@@ -12,7 +12,9 @@ export default function MedicationList({ onSelectMedication }) {
         times: ['09:00'],
         start_date: new Date().toISOString().split('T')[0],
         end_date: '',
-        notes: ''
+        notes: '',
+        phone_number: '',
+        reminder_minutes: 15
     });
 
     useEffect(() => {
@@ -45,7 +47,9 @@ export default function MedicationList({ onSelectMedication }) {
                     times: ['09:00'],
                     start_date: new Date().toISOString().split('T')[0],
                     end_date: '',
-                    notes: ''
+                    notes: '',
+                    phone_number: '',
+                    reminder_minutes: 15
                 });
                 loadMedications();
 
@@ -97,95 +101,92 @@ export default function MedicationList({ onSelectMedication }) {
     }
 
     return (
-        <div className="medication-list">
-            <div className="flex justify-between items-center mb-lg">
+        <div className="medication-list animate-fade-in">
+            <div className="flex justify-between items-center mb-xl">
                 <div>
-                    <h2>💊 My Medications</h2>
-                    <p className="text-secondary">Manage your medication schedule</p>
+                    <h1 style={{ marginBottom: '0.25rem' }}>Active Regimen</h1>
+                    <p className="text-secondary">Comprehensive list of your current medications and schedules.</p>
                 </div>
                 <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
-                    + Add Medication
+                    <span>+</span> Register New Medication
                 </button>
             </div>
 
             {medications.length === 0 ? (
-                <div className="glass-card text-center" style={{ padding: '3rem' }}>
-                    <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>💊</div>
-                    <h3>No medications yet</h3>
-                    <p className="text-secondary mb-lg">Start by adding your first medication</p>
+                <div className="card text-center" style={{ padding: '4rem 0', backgroundColor: 'var(--bg-secondary)' }}>
+                    <div style={{ fontSize: '3rem', marginBottom: '1.5rem' }}>📋</div>
+                    <h3>No Active Medications</h3>
+                    <p className="text-secondary mb-lg">Your medication list is currently empty.</p>
                     <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
-                        + Add Your First Medication
+                        Initialize Medication Record
                     </button>
                 </div>
             ) : (
-                <div className="grid gap-lg">
+                <div className="grid grid-2">
                     {medications.map((med) => (
-                        <div key={med.id} className="glass-card">
-                            <div className="flex justify-between items-start mb-md">
+                        <div key={med.id} className="card">
+                            <div className="flex justify-between items-start mb-lg">
                                 <div>
-                                    <h3>{med.name}</h3>
+                                    <h3 style={{ margin: 0, color: 'var(--primary)' }}>{med.name}</h3>
                                     <div className="flex gap-sm mt-sm">
-                                        <span className="badge badge-info">{med.dosage}</span>
-                                        <span className="badge badge-success">{med.frequency}</span>
+                                        <span className={`badge badge-info`}>{med.dosage}</span>
+                                        <span className={`badge badge-success`}>{med.frequency.toUpperCase()}</span>
                                     </div>
                                 </div>
                                 <div className="flex gap-sm">
                                     <button
-                                        className="btn btn-outline btn-icon"
+                                        className="btn btn-outline"
+                                        style={{ padding: '0.4rem' }}
                                         onClick={() => onSelectMedication && onSelectMedication(med)}
-                                        title="View details"
+                                        title="Detailed Analysis"
                                     >
-                                        👁️
+                                        🔍
                                     </button>
                                     <button
-                                        className="btn btn-danger btn-icon"
+                                        className="btn btn-outline"
+                                        style={{ padding: '0.4rem', color: 'var(--danger)' }}
                                         onClick={() => handleDeleteMedication(med.id)}
-                                        title="Delete"
+                                        title="Remove Record"
                                     >
                                         🗑️
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="mb-md">
-                                <div className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-                                    Schedule Times:
+                            <div className="mb-md p-md" style={{ backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
+                                <div className="text-muted" style={{ fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
+                                    Scheduled Intake
                                 </div>
                                 <div className="flex gap-sm flex-wrap">
                                     {(typeof med.times === 'string' ? JSON.parse(med.times) : med.times).map((time, idx) => (
-                                        <div key={idx} style={{
-                                            padding: '0.5rem 1rem',
-                                            background: 'var(--bg-glass)',
-                                            borderRadius: 'var(--radius-md)',
+                                        <span key={idx} style={{
+                                            padding: '0.25rem 0.75rem',
+                                            backgroundColor: 'white',
+                                            border: '1px solid var(--border-subtle)',
+                                            borderRadius: 'var(--radius-sm)',
+                                            fontSize: '0.875rem',
                                             fontWeight: '600'
                                         }}>
-                                            ⏰ {time}
-                                        </div>
+                                            {time}
+                                        </span>
                                     ))}
                                 </div>
                             </div>
 
-                            <div className="flex justify-between items-center" style={{
-                                padding: '0.75rem',
-                                background: 'var(--bg-glass)',
-                                borderRadius: 'var(--radius-md)'
-                            }}>
-                                <div className="text-secondary" style={{ fontSize: '0.875rem' }}>
-                                    📅 Started: {new Date(med.start_date).toLocaleDateString()}
-                                    {med.end_date && ` • Ends: ${new Date(med.end_date).toLocaleDateString()}`}
+                            <div className="flex justify-between items-center" style={{ fontSize: '0.875rem' }}>
+                                <div className="text-secondary">
+                                    <span style={{ fontWeight: '600' }}>Starts:</span> {new Date(med.start_date).toLocaleDateString()}
                                 </div>
+                                {med.phone_number && (
+                                    <div className="badge badge-info" style={{ borderRadius: 'var(--radius-sm)' }}>
+                                        SMS Reminders Enabled ({med.reminder_minutes}m)
+                                    </div>
+                                )}
                             </div>
 
                             {med.notes && (
-                                <div className="mt-md" style={{
-                                    padding: '0.75rem',
-                                    background: 'var(--bg-glass)',
-                                    borderRadius: 'var(--radius-md)',
-                                    fontSize: '0.875rem',
-                                    fontStyle: 'italic',
-                                    color: 'var(--text-secondary)'
-                                }}>
-                                    📝 {med.notes}
+                                <div className="mt-md pt-md" style={{ borderTop: '1px solid var(--border-subtle)', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                                    <span style={{ fontWeight: '600', color: 'var(--primary)' }}>Instructions:</span> {med.notes}
                                 </div>
                             )}
                         </div>
@@ -196,15 +197,19 @@ export default function MedicationList({ onSelectMedication }) {
             {/* Add Medication Modal */}
             {showAddModal && (
                 <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <h2>Add New Medication</h2>
+                    <div className="modal-content animate-fade-in" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-xl">
+                            <h2 style={{ margin: 0 }}>Register Medication</h2>
+                            <button className="btn btn-outline" style={{ padding: '0.4rem' }} onClick={() => setShowAddModal(false)}>✕</button>
+                        </div>
+
                         <form onSubmit={handleAddMedication}>
                             <div className="input-group">
-                                <label className="input-label">Medication Name</label>
+                                <label className="input-label">Pharmaceutical Name</label>
                                 <input
                                     type="text"
                                     className="input-field"
-                                    placeholder="e.g., Aspirin"
+                                    placeholder="Enter medication name"
                                     value={newMed.name}
                                     onChange={(e) => setNewMed({ ...newMed, name: e.target.value })}
                                     required
@@ -213,11 +218,11 @@ export default function MedicationList({ onSelectMedication }) {
 
                             <div className="grid grid-2">
                                 <div className="input-group">
-                                    <label className="input-label">Dosage</label>
+                                    <label className="input-label">Dosage (Unit)</label>
                                     <input
                                         type="text"
                                         className="input-field"
-                                        placeholder="e.g., 100mg"
+                                        placeholder="e.g., 500mg"
                                         value={newMed.dosage}
                                         onChange={(e) => setNewMed({ ...newMed, dosage: e.target.value })}
                                         required
@@ -225,56 +230,59 @@ export default function MedicationList({ onSelectMedication }) {
                                 </div>
 
                                 <div className="input-group">
-                                    <label className="input-label">Frequency</label>
+                                    <label className="input-label">Interval Frequency</label>
                                     <select
                                         className="input-field"
                                         value={newMed.frequency}
                                         onChange={(e) => setNewMed({ ...newMed, frequency: e.target.value })}
                                     >
-                                        <option value="daily">Daily</option>
-                                        <option value="twice-daily">Twice Daily</option>
-                                        <option value="three-times-daily">Three Times Daily</option>
-                                        <option value="weekly">Weekly</option>
-                                        <option value="as-needed">As Needed</option>
+                                        <option value="daily">Every 24 Hours (Daily)</option>
+                                        <option value="twice-daily">Every 12 Hours</option>
+                                        <option value="three-times-daily">Every 8 Hours</option>
+                                        <option value="weekly">Weekly Analysis</option>
+                                        <option value="as-needed">PRN (As Needed)</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div className="input-group">
-                                <label className="input-label">Schedule Times</label>
-                                {newMed.times.map((time, idx) => (
-                                    <div key={idx} className="flex gap-sm mb-sm">
-                                        <input
-                                            type="time"
-                                            className="input-field"
-                                            value={time}
-                                            onChange={(e) => updateTimeSlot(idx, e.target.value)}
-                                            required
-                                        />
-                                        {newMed.times.length > 1 && (
-                                            <button
-                                                type="button"
-                                                className="btn btn-danger btn-icon"
-                                                onClick={() => removeTimeSlot(idx)}
-                                            >
-                                                ✕
-                                            </button>
-                                        )}
-                                    </div>
-                                ))}
-                                <button
-                                    type="button"
-                                    className="btn btn-outline"
-                                    onClick={addTimeSlot}
-                                    style={{ marginTop: '0.5rem' }}
-                                >
-                                    + Add Time Slot
-                                </button>
+                                <label className="input-label">Scheduled Intake Times</label>
+                                <div className="flex flex-col gap-sm">
+                                    {newMed.times.map((time, idx) => (
+                                        <div key={idx} className="flex gap-sm">
+                                            <input
+                                                type="time"
+                                                className="input-field"
+                                                value={time}
+                                                onChange={(e) => updateTimeSlot(idx, e.target.value)}
+                                                required
+                                            />
+                                            {newMed.times.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline"
+                                                    style={{ color: 'var(--danger)' }}
+                                                    onClick={() => removeTimeSlot(idx)}
+                                                >
+                                                    Remove
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                    <button
+                                        type="button"
+                                        className="btn btn-outline mt-xs"
+                                        style={{ width: 'fit-content' }}
+                                        onClick={addTimeSlot}
+                                    >
+                                        + Add Time Slot
+                                    </button>
+                                </div>
                             </div>
 
-                            <div className="grid grid-2">
+                            <div className="grid grid-2 mt-md">
                                 <div className="input-group">
-                                    <label className="input-label">Start Date</label>
+                                    <label className="input-label">Initiation Date</label>
                                     <input
                                         type="date"
                                         className="input-field"
@@ -285,7 +293,7 @@ export default function MedicationList({ onSelectMedication }) {
                                 </div>
 
                                 <div className="input-group">
-                                    <label className="input-label">End Date (Optional)</label>
+                                    <label className="input-label">Termination Date (Optional)</label>
                                     <input
                                         type="date"
                                         className="input-field"
@@ -295,27 +303,54 @@ export default function MedicationList({ onSelectMedication }) {
                                 </div>
                             </div>
 
+                            <div className="grid grid-2">
+                                <div className="input-group">
+                                    <label className="input-label">Notification Number</label>
+                                    <input
+                                        type="tel"
+                                        className="input-field"
+                                        placeholder="+1234567890"
+                                        value={newMed.phone_number}
+                                        onChange={(e) => setNewMed({ ...newMed, phone_number: e.target.value })}
+                                    />
+                                </div>
+
+                                <div className="input-group">
+                                    <label className="input-label">Alert Sensitivity (Lead Time)</label>
+                                    <select
+                                        className="input-field"
+                                        value={newMed.reminder_minutes}
+                                        onChange={(e) => setNewMed({ ...newMed, reminder_minutes: parseInt(e.target.value) })}
+                                    >
+                                        <option value="5">5 Minutes</option>
+                                        <option value="15">15 Minutes</option>
+                                        <option value="30">30 Minutes</option>
+                                        <option value="60">1 Hour</option>
+                                    </select>
+                                </div>
+                            </div>
+
                             <div className="input-group">
-                                <label className="input-label">Notes (Optional)</label>
+                                <label className="input-label">Clinical Notes / Instructions</label>
                                 <textarea
                                     className="input-field"
-                                    placeholder="Any special instructions..."
+                                    placeholder="Specify administration notes (e.g., take with food)"
                                     rows="3"
                                     value={newMed.notes}
                                     onChange={(e) => setNewMed({ ...newMed, notes: e.target.value })}
                                 />
                             </div>
 
-                            <div className="flex gap-md justify-end">
+                            <div className="flex gap-md justify-end mt-xl">
                                 <button
                                     type="button"
                                     className="btn btn-outline"
                                     onClick={() => setShowAddModal(false)}
                                 >
-                                    Cancel
+                                    Discard
                                 </button>
-                                <button type="submit" className="btn btn-primary">
-                                    Add Medication
+                                <button type="submit" className="btn btn-primary" style={{ padding: '0.625rem 2rem' }}>
+                                    Confirm Enrollment
                                 </button>
                             </div>
                         </form>

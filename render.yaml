@@ -16,6 +16,10 @@ services:
         value: 5000
       - key: PYTHON_VERSION
         value: 3.11.7
+      - key: GOOGLE_CLIENT_ID
+      - key: TWILIO_ACCOUNT_SID
+      - key: TWILIO_AUTH_TOKEN
+      - key: TWILIO_WHATSAPP_NUMBER
 
   # Frontend Service
   - type: web
@@ -29,6 +33,7 @@ services:
           name: medicine-tracker-api
           type: web
           property: url
+      - key: VITE_GOOGLE_CLIENT_ID
 
 databases:
   - name: medicine-tracker-db

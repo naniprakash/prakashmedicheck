@@ -25,6 +25,17 @@ except Exception as e:
 
 
 # Models
+class User(Base):
+    __tablename__ = 'users'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    google_id = Column(String(200), unique=True, nullable=False, index=True)
+    email = Column(String(200), unique=True, nullable=False)
+    name = Column(String(200))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    medications = relationship("Medication", back_populates="user")
+
 class Medication(Base):
     __tablename__ = 'medications'
     
@@ -37,8 +48,12 @@ class Medication(Base):
     end_date = Column(String(50))
     notes = Column(Text)
     image_path = Column(String(500))
+    phone_number = Column(String(50))  # WhatsApp number
+    reminder_minutes = Column(Integer, default=15)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     
+    user = relationship("User", back_populates="medications")
     logs = relationship("MedicationLog", back_populates="medication")
 
 class MedicationLog(Base):
@@ -46,6 +61,7 @@ class MedicationLog(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     medication_id = Column(Integer, ForeignKey('medications.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     scheduled_time = Column(String(50), nullable=False)
     taken_time = Column(String(50))
     status = Column(String(50), nullable=False)
@@ -87,11 +103,23 @@ class MedicineDatabase:
     def __init__(self):
         self.session = SessionLocal()
     
-    def add_medication(self, name: str, dosage: str, frequency: str, 
+    def get_or_create_user(self, google_id: str, email: str, name: str = None) -> User:
+        """Get existing user or create a new one"""
+        user = self.session.query(User).filter(User.google_id == google_id).first()
+        if not user:
+            user = User(google_id=google_id, email=email, name=name)
+            self.session.add(user)
+            self.session.commit()
+            print(f"Created new user: {email}")
+        return user
+
+    def add_medication(self, user_id: int, name: str, dosage: str, frequency: str, 
                       times: list, start_date: str, end_date: str = None,
-                      notes: str = None, image_path: str = None) -> int:
+                      notes: str = None, image_path: str = None,
+                      phone_number: str = None, reminder_minutes: int = 15) -> int:
         """Add a new medication"""
         med = Medication(
+            user_id=user_id,
             name=name,
             dosage=dosage,
             frequency=frequency,
@@ -99,25 +127,27 @@ class MedicineDatabase:
             start_date=start_date,
             end_date=end_date,
             notes=notes,
-            image_path=image_path
+            image_path=image_path,
+            phone_number=phone_number,
+            reminder_minutes=reminder_minutes
         )
         self.session.add(med)
         self.session.commit()
         return med.id
     
-    def get_all_medications(self) -> list:
-        """Get all medications"""
-        meds = self.session.query(Medication).order_by(Medication.created_at.desc()).all()
+    def get_all_medications(self, user_id: int) -> list:
+        """Get all medications for a user"""
+        meds = self.session.query(Medication).filter(Medication.user_id == user_id).order_by(Medication.created_at.desc()).all()
         return [self._medication_to_dict(med) for med in meds]
     
-    def get_medication(self, med_id: int) -> dict:
+    def get_medication(self, med_id: int, user_id: int) -> dict:
         """Get a specific medication"""
-        med = self.session.query(Medication).filter(Medication.id == med_id).first()
+        med = self.session.query(Medication).filter(Medication.id == med_id, Medication.user_id == user_id).first()
         return self._medication_to_dict(med) if med else None
     
-    def update_medication(self, med_id: int, **kwargs) -> bool:
+    def update_medication(self, med_id: int, user_id: int, **kwargs) -> bool:
         """Update medication details"""
-        med = self.session.query(Medication).filter(Medication.id == med_id).first()
+        med = self.session.query(Medication).filter(Medication.id == med_id, Medication.user_id == user_id).first()
         if not med:
             return False
         
@@ -129,9 +159,9 @@ class MedicineDatabase:
         self.session.commit()
         return True
     
-    def delete_medication(self, med_id: int) -> bool:
+    def delete_medication(self, med_id: int, user_id: int) -> bool:
         """Delete a medication"""
-        med = self.session.query(Medication).filter(Medication.id == med_id).first()
+        med = self.session.query(Medication).filter(Medication.id == med_id, Medication.user_id == user_id).first()
         if not med:
             return False
         
@@ -139,11 +169,12 @@ class MedicineDatabase:
         self.session.commit()
         return True
     
-    def log_medication(self, medication_id: int, scheduled_time: str, 
+    def log_medication(self, user_id: int, medication_id: int, scheduled_time: str, 
                       taken_time: str = None, status: str = 'pending',
                       notes: str = None) -> int:
         """Log medication intake"""
         log = MedicationLog(
+            user_id=user_id,
             medication_id=medication_id,
             scheduled_time=scheduled_time,
             taken_time=taken_time,
@@ -154,11 +185,11 @@ class MedicineDatabase:
         self.session.commit()
         return log.id
     
-    def get_medication_logs(self, medication_id: int = None, 
+    def get_medication_logs(self, user_id: int, medication_id: int = None, 
                            start_date: str = None,
                            end_date: str = None) -> list:
         """Get medication logs with optional filters"""
-        query = self.session.query(MedicationLog)
+        query = self.session.query(MedicationLog).filter(MedicationLog.user_id == user_id)
         
         if medication_id:
             query = query.filter(MedicationLog.medication_id == medication_id)
@@ -170,9 +201,9 @@ class MedicineDatabase:
         logs = query.order_by(MedicationLog.scheduled_time.desc()).all()
         return [self._log_to_dict(log) for log in logs]
     
-    def update_log_status(self, log_id: int, status: str, taken_time: str = None) -> bool:
+    def update_log_status(self, log_id: int, user_id: int, status: str, taken_time: str = None) -> bool:
         """Update medication log status"""
-        log = self.session.query(MedicationLog).filter(MedicationLog.id == log_id).first()
+        log = self.session.query(MedicationLog).filter(MedicationLog.id == log_id, MedicationLog.user_id == user_id).first()
         if not log:
             return False
         
@@ -196,12 +227,13 @@ class MedicineDatabase:
         self.session.commit()
         return pred.id
     
-    def get_adherence_stats(self, medication_id: int = None, days: int = 30) -> dict:
+    def get_adherence_stats(self, user_id: int, medication_id: int = None, days: int = 30) -> dict:
         """Calculate adherence statistics"""
         from datetime import timedelta
         start_date = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
         
         query = self.session.query(MedicationLog).filter(
+            MedicationLog.user_id == user_id,
             MedicationLog.scheduled_time >= start_date
         )
         
@@ -237,6 +269,8 @@ class MedicineDatabase:
             'end_date': med.end_date,
             'notes': med.notes,
             'image_path': med.image_path,
+            'phone_number': med.phone_number,
+            'reminder_minutes': med.reminder_minutes,
             'created_at': med.created_at.isoformat() if med.created_at else None
         }
     
