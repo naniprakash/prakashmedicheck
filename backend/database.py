@@ -135,9 +135,13 @@ class MedicineDatabase:
         self.session.commit()
         return med.id
     
-    def get_all_medications(self, user_id: int) -> list:
-        """Get all medications for a user"""
-        meds = self.session.query(Medication).filter(Medication.user_id == user_id).order_by(Medication.created_at.desc()).all()
+    def get_all_medications(self, user_id: int = None) -> list:
+        """Get all medications (optionally filtered by user)"""
+        query = self.session.query(Medication)
+        if user_id is not None:
+            query = query.filter(Medication.user_id == user_id)
+        
+        meds = query.order_by(Medication.created_at.desc()).all()
         return [self._medication_to_dict(med) for med in meds]
     
     def get_medication(self, med_id: int, user_id: int) -> dict:
