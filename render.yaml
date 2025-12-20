@@ -17,9 +17,13 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.7
       - key: GOOGLE_CLIENT_ID
+        value: "REPLACE_ME" # Set in Render Dashboard
       - key: TWILIO_ACCOUNT_SID
+        value: "REPLACE_ME"
       - key: TWILIO_AUTH_TOKEN
+        value: "REPLACE_ME"
       - key: TWILIO_WHATSAPP_NUMBER
+        value: "REPLACE_ME"
 
   # Frontend Service
   - type: web
@@ -29,11 +33,9 @@ services:
     staticPublishPath: dist
     envVars:
       - key: VITE_API_URL
-        fromService:
-          name: medicine-tracker-api
-          type: web
-          property: url
+        value: https://medicine-tracker-api.onrender.com
       - key: VITE_GOOGLE_CLIENT_ID
+        value: "REPLACE_ME"
 
 databases:
   - name: medicine-tracker-db
